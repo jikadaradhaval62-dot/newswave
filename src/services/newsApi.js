@@ -1,51 +1,31 @@
-// ❌ newsapi.org direct call ના કરવું
-
-// ✅ only Vercel API function call
-
-async function fetchNews(url) {
-
+async function request(url) {
   const res = await fetch(url);
+  const text = await res.text(); // <-- important (HTML 404 parse error avoid)
 
-  const data = await res.json();
-
-  if (!res.ok) {
-
-    throw new Error(data.message || "Error");
-
+  let data;
+  try {
+    data = JSON.parse(text);
+  } catch {
+    throw new Error(text || "Invalid response");
   }
 
-  return {
-    articles: data.articles || []
-  };
+  if (!res.ok) throw new Error(data?.message || "API error");
+  if (data?.status && data.status !== "ok") throw new Error(data?.message || "API error");
 
+  return { articles: data?.articles || [] };
 }
 
+export function getTopHeadlines({ category = "" } = {}) {
+  const params = new URLSearchParams();
+  if (category) params.set("category", category);
 
-// TOP HEADLINES
-
-export async function getTopHeadlines(category = "") {
-
-  let url = "/api/news";
-
-  if (category) {
-
-    url += "?category=" + category;
-
-  }
-
-  return fetchNews(url);
-
+  const url = params.toString() ? `/api/news?${params.toString()}` : `/api/news`;
+  return request(url);
 }
 
+export function searchNews({ q } = {}) {
+  const params = new URLSearchParams();
+  if (q) params.set("q", q);
 
-
-// SEARCH
-
-export async function searchNews(query) {
-
-  const url =
-    "/api/news?q=" + query;
-
-  return fetchNews(url);
-
+  return request(`/api/news?${params.toString()}`);
 }
