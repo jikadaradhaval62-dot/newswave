@@ -1,18 +1,51 @@
-async function request(url) {
+// ❌ newsapi.org direct call ના કરવું
+
+// ✅ only Vercel API function call
+
+async function fetchNews(url) {
+
   const res = await fetch(url);
-  const data = await res.json().catch(() => null);
 
-  if (!res.ok) throw new Error(data?.message || "API error");
-  if (data?.status && data.status !== "ok") throw new Error(data?.message || "API error");
+  const data = await res.json();
 
-  return { articles: data?.articles || [] };
+  if (!res.ok) {
+
+    throw new Error(data.message || "Error");
+
+  }
+
+  return {
+    articles: data.articles || []
+  };
+
 }
 
-export function getTopHeadlines({ category = "" } = {}) {
-  const url = category ? `/api/news?category=${encodeURIComponent(category)}` : `/api/news`;
-  return request(url);
+
+// TOP HEADLINES
+
+export async function getTopHeadlines(category = "") {
+
+  let url = "/api/news";
+
+  if (category) {
+
+    url += "?category=" + category;
+
+  }
+
+  return fetchNews(url);
+
 }
 
-export function searchNews({ q }) {
-  return request(`/api/news?q=${encodeURIComponent(q || "")}`);
+
+
+// SEARCH
+
+export async function searchNews(query) {
+
+  const url =
+    "/api/news?q=" + query;
+
+  return fetchNews(url);
+
 }
